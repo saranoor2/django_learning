@@ -9,11 +9,21 @@ class AdViewSet(ModelViewSet):
     queryset = Ad.objects.all()
     serializer_class = AdSerializer
 
-    @action(detail=True, methods=['post'])  # ✅ use detail=True to get one Ad
+    @action(detail=True, methods=['post']) 
     def post_random_ads(self, request, pk=None):
-        ad = self.get_object()  # ✅ now this works
-        # Your custom logic here, e.g., simulate ad publishing
-        return Response({'message': f'Ad "{ad.title}" posted!'}, status=status.HTTP_200_OK)
+        # this function works if the given id is present in the db; http://127.0.0.1:8000/ads/7/post_random_ads/
+        ad = self.get_object() 
+        serializer = self.get_serializer(ad)
+        return Response({'message': f'Ad "{ad.title}" posted!', 'ad': serializer.data}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['get'])
+    def get_random_ads(self, request):
+        ads = Ad.objects.order_by('?')[:5]  # Get 5 random ads
+        if not ads:
+            return Response({'ads': []}, status=status.HTTP_200_OK)
+        serializer = self.get_serializer(ads, many=True)
+        return Response({'ads': serializer.data}, status=status.HTTP_200_OK)
+    
 # class AdAPI(APIView):
 #     def get_object(self, pk):
 #         try:
